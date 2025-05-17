@@ -1,0 +1,203 @@
+
+
+ADDRESS TABLE
+
+CREATE TABLE address (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    street_address VARCHAR(255),
+    city VARCHAR(255),
+    state VARCHAR(255),
+    zip_code VARCHAR(10),
+    country VARCHAR(255),
+    mobile VARCHAR(255),
+    address_type ENUM('BILLING', 'SHIPPING') DEFAULT 'SHIPPING',
+    is_default BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CATEGORIES TABLE
+
+CREATE TABLE categories (
+    category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    category_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    level INT NOT NULL,
+    parent_category_id BIGINT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (parent_category_id) REFERENCES categories(category_id)
+);
+
+
+USERS TABLE
+
+CREATE TABLE users (
+    user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    first_name VARCHAR(20) NOT NULL,
+    last_name VARCHAR(255),
+    password VARCHAR(120) NOT NULL,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+
+ORDERS TABLE  
+
+CREATE TABLE orders (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id VARCHAR(255) NOT NULL UNIQUE,
+    user_id BIGINT,
+    shipping_address_id BIGINT,
+    order_date DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    delivery_date DATETIME(6),
+    total_price DOUBLE NOT NULL,
+    total_discounted_price INT,
+    discount INT,
+    total_item INT NOT NULL,
+    order_status ENUM('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED') DEFAULT 'PENDING',
+    payment_method ENUM('CARD', 'UPI', 'COD', 'NETBANKING'),
+    currency VARCHAR(3) DEFAULT 'USD',
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (shipping_address_id) REFERENCES address(id)
+);
+
+
+
+ORDER_ITEMS TABLE
+
+CREATE TABLE order_item (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT,
+    product_id BIGINT,
+    quantity INT NOT NULL,
+    size VARCHAR(255),
+    price DOUBLE NOT NULL,
+    discounted_price INT,
+    delivery_date DATETIME(6),
+    status ENUM('PENDING', 'SHIPPED', 'DELIVERED', 'RETURNED', 'CANCELLED') DEFAULT 'PENDING',
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+
+PRODUCTS TABLE
+
+CREATE TABLE products (
+    product_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sku VARCHAR(50) UNIQUE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    brand VARCHAR(255),
+    color VARCHAR(255),
+    price DOUBLE NOT NULL,
+    discount_percent INT,
+    discount_price INT,
+    quantity INT,
+    image_url VARCHAR(255),
+    num_ratings INT DEFAULT 0,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    is_active BOOLEAN DEFAULT TRUE,
+    category_id BIGINT,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id)
+);
+
+
+PRODUCT_SIZES TABLE
+
+CREATE TABLE product_sizes (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT NOT NULL,
+    size VARCHAR(255),
+    quantity INT,
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+
+ROLES AND USER_ROLE TABLES
+
+CREATE TABLE roles (
+    role_id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name ENUM('ROLE_ADMIN', 'ROLE_SELLER', 'ROLE_USER') UNIQUE
+);
+
+CREATE TABLE user_role (
+    user_id BIGINT,
+    role_id INT,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (role_id) REFERENCES roles(role_id)
+);
+
+CART TABLE
+
+CREATE TABLE carts      carts (
+    cart_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE,
+    discount INT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CART_ITEMS TABLE
+
+CREATE TABLE cart_items (
+    cart_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cart_id BIGINT,
+    product_id BIGINT,
+    quantity INT,
+    size VARCHAR(255),
+    price DOUBLE NOT NULL,
+    discounted_price INT,
+    added_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    FOREIGN KEY (cart_id) REFERENCES carts(cart_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+
+PAYMENT_INFORMATION TABLE
+
+CREATE TABLE payment_information (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT,
+    payment_method_type ENUM('CARD', 'UPI', 'NETBANKING'),
+    payment_method_id VARCHAR(255), -- Tokenized ID from payment gateway
+    cardholder_name VARCHAR(255),
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+PAYMENT_DETAILS TABLE
+
+CREATE TABLE payment_details (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    order_id BIGINT,
+    payment_id VARCHAR(255),
+    payment_status ENUM('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'),
+    payment_gateway VARCHAR(50),
+    payment_reference_id VARCHAR(255),
+    payment_link_id VARCHAR(255),
+    payment_link_status VARCHAR(255),
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+
+
+REVIEWS TABLE
+
+CREATE TABLE reviews (
+    review_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    product_id BIGINT,
+    user_id BIGINT,
+    rating INT CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+
